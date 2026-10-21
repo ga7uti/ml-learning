@@ -5,10 +5,11 @@ its own folder:
 
 - **`intent-anlaysis/`** — customer-support **intent** classifier (77 banking intents).
 - **`customer-review-analysis/`** — product-review **sentiment** classifier (positive / negative).
-- **`real-state-regression/`** — California **house-price** regressor (random forest).
+- **`real-estate-regression/`** — California **house-price** regressor, solved
+  with both a random forest and a TensorFlow/Keras neural network.
 
 Each project trains a model end-to-end and demonstrates data preparation,
-training, evaluation and inference inside a single Jupyter notebook.
+training, evaluation and inference inside Jupyter notebooks.
 
 ## What's in this repo
 
@@ -26,9 +27,11 @@ training, evaluation and inference inside a single Jupyter notebook.
 │   ├── flipkart_data_with_sentiment.csv
 │   ├── flipkart_data_binary.csv
 │   └── customer_review_model.joblib    # Trained model (generated)
-├── real-state-regression/
-│   ├── real-state-regression.ipynb     # Regression workflow (main artifact)
-│   └── california_housing_rf.joblib    # Trained model (generated)
+├── real-estate-regression/
+│   ├── real-estate-regression.ipynb    # Random-forest workflow (main artifact)
+│   ├── real-esate-neural-network.ipynb # Neural-network workflow (TensorFlow/Keras)
+│   ├── california_housing_rf.joblib    # Trained forest (generated)
+│   └── california_housing_nn.keras     # Trained neural network (generated)
 ├── requirements.txt
 └── README.md
 ```
@@ -138,14 +141,18 @@ jupyter notebook customer-review-analysis/customer_review.ipynb
 
 ---
 
-## Project: California housing regression (`real-state-regression/`)
+## Project: California housing regression (`real-estate-regression/`)
 
 Predicts the **median house value** of a California census block group from
 eight socio-economic and geographic features in the 1990 census, loaded with
 scikit-learn's `fetch_california_housing`. The target (`MedHouseVal`) is
 continuous and measured in **$100,000 units**.
 
-Training, evaluation and inference live in `real-state-regression.ipynb`.
+The folder contains two complementary notebooks: this section covers the
+random-forest workflow, and the next section covers the neural network.
+
+The random-forest training, evaluation and inference live in
+`real-estate-regression.ipynb`.
 
 `california_housing_rf.joblib` is generated when you run the notebook.
 
@@ -178,7 +185,7 @@ baseline MAE of **0.904**.
 Open the notebook and run the cells top to bottom:
 
 ```bash
-jupyter notebook real-state-regression/real-state-regression.ipynb
+jupyter notebook real-estate-regression/real-estate-regression.ipynb
 ```
 
 - Sections 1–2 explore the data, target and outliers.
@@ -186,6 +193,62 @@ jupyter notebook real-state-regression/real-state-regression.ipynb
 - Section 5 compares tree, Ridge, polynomial and random forest models.
 - Section 6 saves the final model and runs a sample prediction; Section 7
   summarises the results and suggests next steps.
+
+---
+
+## Project: California housing with a neural network (`real-estate-regression/`)
+
+Solves the same regression task with a small feed-forward neural network built
+in TensorFlow/Keras. It uses the same 60/20/20 split, target and metrics as the
+random-forest notebook, so the two models can be compared directly.
+
+Training, experiments and inference live in
+`real-esate-neural-network.ipynb`.
+
+`california_housing_nn.keras` is generated when you run the notebook.
+
+### Features
+
+- End-to-end notebook: loading, leakage-free normalization, training and test
+  evaluation.
+- Keras `Normalization` layer adapted on the training split only.
+- MLP (8 → 64 → 32 → 1) with ReLU hidden layers and a linear output.
+- Early stopping on validation loss with best-weight restoration.
+- L2 regularization sweep (`lambda` = 0.0, 0.0001, 0.001).
+- Residual analysis overall, by predicted price band, and as a scatter plot.
+- Side-by-side comparison with a random forest on validation and test splits.
+- Full model saved in the native `.keras` format and reloaded to verify
+  identical predictions.
+
+### Model
+
+| Stage        | Component                                                              |
+| ------------ | ---------------------------------------------------------------------- |
+| Features     | 8 numeric census features, standardized by a Keras `Normalization` layer |
+| Architecture | `Dense(64, relu)` → `Dense(32, relu)` → `Dense(1)`                     |
+| Optimizer    | Adam (`learning_rate=0.001`)                                           |
+| Loss / metric | MSE / MAE                                                             |
+| Task         | Regression (median house value, $100,000 units)                        |
+
+Evaluation uses **MAE**, **RMSE** and **R²**. With `lambda=0.0001`, the network
+reaches **MAE 0.363**, **RMSE 0.534** and **R² 0.781** on the held-out test set,
+compared with **MAE 0.341 / RMSE 0.516 / R² 0.796** for the random forest.
+
+### Usage
+
+Open the notebook and run the cells top to bottom:
+
+```bash
+jupyter notebook real-estate-regression/real-esate-neural-network.ipynb
+```
+
+- Sections 1–4 load the data, normalize it, build the MLP and train it with
+  early stopping.
+- Section 5 tunes L2 regularization; the best setting (`lambda=0.0001`) is
+  refit for the final model.
+- Section 6 analyses residuals.
+- Sections 7–8 compare against a random forest and save/reload the Keras model.
+- Section 9 summarises results and next steps.
 
 ## License
 
